@@ -10,7 +10,9 @@
 
 ## Integrantes do grupo
 
-- João Vitor Silva, Antonio Davi, Pablo Dornelles
+- João Vitor Silva
+- Antonio Davi
+- Pablo Dornelles
 
 ## Linguagem
 

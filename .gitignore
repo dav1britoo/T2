@@ -1,0 +1,19 @@
+# Node (somente para gerar a apresentação localmente com pptxgenjs)
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Artefatos intermediários da geração da apresentação
+apresentacao/slide-*.jpg
+apresentacao/slide-*.png
