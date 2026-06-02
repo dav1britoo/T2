@@ -19,7 +19,7 @@ const FONT_HEAD = "Georgia";
 const FONT_BODY = "Calibri";
 const FONT_MONO = "Consolas";
 
-const TOTAL = 10;
+const TOTAL = 8;
 
 // ---------- Helpers ----------
 function footer(slide, n) {
@@ -169,6 +169,11 @@ function iconBadge(slide, cx, cy, glyph, color, r = 0.42) {
   s.addText("Trabalho Prático 2 — Unidade 3", {
     x: 0.9, y: 6.85, w: 11.5, h: 0.4, fontFace: FONT_BODY, fontSize: 12, color: MUTED, italic: true,
   });
+  s.addNotes(
+    "[~10 s] Apresentação de 5 minutos. Abertura rápida: problema 449B do Codeforces, " +
+    "resolvido com Dijkstra. Divisão: 1 min problema/modelagem, 2 min estratégia, " +
+    "1 min complexidade/casos, 1 min conclusão."
+  );
 }
 
 // =============================================================
@@ -223,134 +228,104 @@ function iconBadge(slide, cx, cy, glyph, color, r = 0.42) {
   edge(s, { x: 9.3, y: 6.4 }, { x: 9.9, y: 6.4 }, { color: ACCENT, width: 2, dash: true });
   s.addText("trem (da capital)", { x: 10.0, y: 6.25, w: 2.7, h: 0.3, fontFace: FONT_BODY, fontSize: 11, color: ACCENT });
 
+  s.addNotes(
+    "[~1 min p/ problema + modelagem — começa aqui]\n" +
+    "n cidades (1 = capital), m estradas com peso, k trens diretos da capital. " +
+    "Queremos fechar o MÁXIMO de trens sem aumentar a distância mínima de nenhuma cidade " +
+    "até a capital. No exemplo, a resposta é 2."
+  );
   footer(s, 2);
 }
 
 // =============================================================
-// Slide 3 — Do enunciado ao grafo (3 grafos)
+// Slide 3 — Modelagem: enunciado → grafo + por que Dijkstra
 // =============================================================
 {
   const s = pres.addSlide();
   s.background = { color: WHITE };
-  title(s, "2. Do enunciado ao grafo");
-  s.addText("A imagem cresce em três etapas:", {
+  title(s, "2. Modelagem como grafo");
+  s.addText("Cada linha da entrada vira um elemento do grafo — em três etapas:", {
     x: 0.5, y: 1.05, w: 12.3, h: 0.35, fontFace: FONT_BODY, fontSize: 14, italic: true, color: MUTED,
   });
 
+  // Três mini-grafos das etapas (esquerda)
   const stages = [
-    { titulo: "1. Cidades → vértices", cor: ICE, roads: false, trains: false, desc: "n nós; cidade 1 é a capital." },
-    { titulo: "2. Estradas → arestas", cor: GOLD, roads: true, trains: false, desc: "Aresta bidirecional de peso x." },
-    { titulo: "3. Trens → arestas extras", cor: ACCENT, roads: true, trains: true, desc: "Aresta 1 → s marcada como trem." },
+    { titulo: "Cidades → vértices", cor: ICE, roads: false, trains: false },
+    { titulo: "Estradas → arestas", cor: GOLD, roads: true, trains: false },
+    { titulo: "Trens → arestas extras", cor: ACCENT, roads: true, trains: true },
   ];
   let cx = 0.5;
   for (const st of stages) {
     s.addShape("roundRect", {
-      x: cx, y: 1.55, w: 4.1, h: 5.3, fill: { color: DARK }, line: { color: st.cor, width: 2 }, rectRadius: 0.08,
+      x: cx, y: 1.5, w: 2.5, h: 3.95, fill: { color: DARK }, line: { color: st.cor, width: 2 }, rectRadius: 0.08,
     });
     s.addText(st.titulo, {
-      x: cx + 0.2, y: 1.65, w: 3.7, h: 0.45, fontFace: FONT_HEAD, fontSize: 15, bold: true, color: st.cor,
+      x: cx + 0.12, y: 1.58, w: 2.26, h: 0.6, fontFace: FONT_HEAD, fontSize: 12.5, bold: true, color: st.cor,
     });
-    const gx = cx + 0.2, gy = 2.25, gw = 3.7, gh = 3.3;
+    const gx = cx + 0.18, gy = 2.35, gw = 2.14, gh = 2.7;
     const lay = {
-      1: { rx: 0.12, ry: 0.52 }, 2: { rx: 0.45, ry: 0.10 }, 3: { rx: 0.62, ry: 0.52 },
-      4: { rx: 0.92, ry: 0.92 }, 5: { rx: 0.42, ry: 0.92 },
+      1: { rx: 0.12, ry: 0.50 }, 2: { rx: 0.48, ry: 0.08 }, 3: { rx: 0.64, ry: 0.50 },
+      4: { rx: 0.92, ry: 0.92 }, 5: { rx: 0.44, ry: 0.92 },
     };
     const np = {};
     for (const k of Object.keys(lay)) np[k] = { x: gx + lay[k].rx * gw, y: gy + lay[k].ry * gh };
-    if (st.roads) for (const [a, b] of [[1,2],[2,3],[1,3],[3,4],[1,5]]) edge(s, np[a], np[b], { width: 1.2 });
-    if (st.trains) for (const t of [3, 4, 5]) edge(s, np[1], np[t], { color: ACCENT, width: 1.0, dash: true });
+    if (st.roads) for (const [a, b] of [[1,2],[2,3],[1,3],[3,4],[1,5]]) edge(s, np[a], np[b], { width: 1.0 });
+    if (st.trains) for (const t of [3, 4, 5]) edge(s, np[1], np[t], { color: ACCENT, width: 0.9, dash: true });
     for (const [id, p] of Object.entries(np))
-      node(s, p.x, p.y, id, { r: 0.18, fs: 11, fill: id === "1" ? GOLD : ICE });
-    s.addText(st.desc, {
-      x: cx + 0.2, y: 5.75, w: 3.7, h: 1.0, fontFace: FONT_BODY, fontSize: 13, color: ICE,
-    });
-    cx += 4.27;
+      node(s, p.x, p.y, id, { r: 0.15, fs: 10, fill: id === "1" ? GOLD : ICE });
+    cx += 2.62;
   }
+
+  // Painel direito: por que Dijkstra
+  s.addShape("roundRect", {
+    x: 8.5, y: 1.5, w: 4.35, h: 3.95, fill: { color: NAVY }, line: { color: NAVY }, rectRadius: 0.08,
+  });
+  s.addText("Por que Dijkstra?", {
+    x: 8.7, y: 1.62, w: 4.0, h: 0.5, fontFace: FONT_HEAD, fontSize: 17, bold: true, color: GOLD,
+  });
+  const reasons = [
+    { i: "≥0", t: "Pesos não negativos (x, y ≥ 1)" },
+    { i: "1", t: "Origem única: a capital" },
+    { i: "+", t: "Trens são só arestas extras" },
+  ];
+  let py = 2.35;
+  for (const rsn of reasons) {
+    iconBadge(s, 9.0, py + 0.3, rsn.i, ACCENT, 0.3);
+    s.addText(rsn.t, {
+      x: 9.5, y: py, w: 3.2, h: 0.65, fontFace: FONT_BODY, fontSize: 14, color: WHITE, valign: "middle",
+    });
+    py += 1.0;
+  }
+
+  // Faixa inferior: representação
+  s.addShape("roundRect", {
+    x: 0.5, y: 5.7, w: 12.35, h: 1.15, fill: { color: CODEBG }, line: { color: NAVY }, rectRadius: 0.06,
+  });
+  s.addText("Representação", {
+    x: 0.75, y: 5.8, w: 4, h: 0.4, fontFace: FONT_HEAD, fontSize: 14, bold: true, color: GOLD,
+  });
+  s.addText([
+    { text: "adj[u] = [ (vizinho, peso, é_trem) ]         ", options: { color: WHITE, bold: true } },
+    { text: "lista de adjacência   •   V = n   •   E = 2m + k", options: { color: ICE } },
+  ], { x: 0.75, y: 6.25, w: 12, h: 0.5, fontFace: FONT_MONO, fontSize: 14 });
+
+  s.addNotes(
+    "[~1 min p/ problema + modelagem]\n" +
+    "Mostrar que cada cidade é um vértice, cada estrada uma aresta com peso, e o " +
+    "pulo do gato: o trem é só uma aresta EXTRA da capital até a cidade. " +
+    "Como todos os pesos são >= 1 (não negativos) e a origem é única (capital), " +
+    "Dijkstra é a ferramenta certa."
+  );
   footer(s, 3);
 }
 
 // =============================================================
-// Slide 4 — Modelagem (pares visuais enunciado → grafo)
+// Slide 4 — Estratégia (relaxamento como diagrama)
 // =============================================================
 {
   const s = pres.addSlide();
   s.background = { color: WHITE };
-  title(s, "3. Modelagem como grafo");
-
-  // Três linhas: enunciado  →  elemento do grafo (mini-desenho)
-  const rows = [
-    { txt: "Estrada (u, v, x)", draw: (cx, cy) => {
-        const a = { x: cx, y: cy }, b = { x: cx + 1.1, y: cy };
-        edge(s, a, b, { label: "x", color: NAVY, ly: -0.18 });
-        node(s, a.x, a.y, "u", { r: 0.2, fs: 12 });
-        node(s, b.x, b.y, "v", { r: 0.2, fs: 12 });
-      }, cap: "aresta bidirecional, peso x" },
-    { txt: "Trem (s, y)", draw: (cx, cy) => {
-        const a = { x: cx, y: cy }, b = { x: cx + 1.1, y: cy };
-        edge(s, a, b, { label: "y", color: ACCENT, dash: true, ly: -0.18, labelColor: ACCENT });
-        node(s, a.x, a.y, "1", { r: 0.2, fs: 12, fill: GOLD });
-        node(s, b.x, b.y, "s", { r: 0.2, fs: 12 });
-      }, cap: "aresta extra 1 → s, peso y" },
-    { txt: "Menores distâncias", draw: (cx, cy) => {
-        iconBadge(s, cx + 0.55, cy, "→", GOLD, 0.26);
-      }, cap: "Dijkstra de origem única (vértice 1)" },
-  ];
-  let ry = 1.5;
-  for (const r of rows) {
-    s.addShape("roundRect", {
-      x: 0.6, y: ry, w: 7.6, h: 1.45, fill: { color: SOFT }, line: { color: ICE, width: 1 }, rectRadius: 0.06,
-    });
-    s.addText(r.txt, {
-      x: 0.85, y: ry, w: 2.7, h: 1.45, fontFace: FONT_HEAD, fontSize: 16, bold: true, color: NAVY, valign: "middle",
-    });
-    iconBadge(s, 3.85, ry + 0.72, "→", ICE, 0.2);
-    r.draw(4.55, ry + 0.72);
-    s.addText(r.cap, {
-      x: 6.0, y: ry, w: 2.0, h: 1.45, fontFace: FONT_BODY, fontSize: 11, color: DARK, italic: true, valign: "middle",
-    });
-    ry += 1.6;
-  }
-
-  // Painel direito: por que Dijkstra (curto, com ícones)
-  s.addShape("roundRect", {
-    x: 8.5, y: 1.5, w: 4.35, h: 4.95, fill: { color: NAVY }, line: { color: NAVY }, rectRadius: 0.08,
-  });
-  s.addText("Por que Dijkstra?", {
-    x: 8.7, y: 1.65, w: 4.0, h: 0.5, fontFace: FONT_HEAD, fontSize: 17, bold: true, color: GOLD,
-  });
-  const reasons = [
-    { i: "≥0", t: "Pesos não negativos\n(x, y ≥ 1)" },
-    { i: "1", t: "Origem única:\na capital" },
-    { i: "+", t: "Trens são só\narestas extras" },
-  ];
-  let py = 2.4;
-  for (const rsn of reasons) {
-    iconBadge(s, 9.05, py + 0.32, rsn.i, ACCENT, 0.3);
-    s.addText(rsn.t, {
-      x: 9.55, y: py, w: 3.1, h: 0.7, fontFace: FONT_BODY, fontSize: 14, color: WHITE, valign: "middle",
-    });
-    py += 1.25;
-  }
-
-  // Faixa inferior: representação (1 linha de código)
-  s.addShape("roundRect", {
-    x: 0.6, y: 6.35, w: 12.25, h: 0.65, fill: { color: CODEBG }, line: { color: NAVY }, rectRadius: 0.05,
-  });
-  s.addText([
-    { text: "adj[u] = [ (vizinho, peso, é_trem) ]      ", options: { color: GOLD, bold: true } },
-    { text: "V = n   •   E = 2m + k", options: { color: ICE } },
-  ], { x: 0.85, y: 6.35, w: 11.8, h: 0.65, fontFace: FONT_MONO, fontSize: 14, valign: "middle" });
-
-  footer(s, 4);
-}
-
-// =============================================================
-// Slide 5 — Estratégia (relaxamento como diagrama)
-// =============================================================
-{
-  const s = pres.addSlide();
-  s.background = { color: WHITE };
-  title(s, "4. Estratégia: Dijkstra + via_estrada");
+  title(s, "3. Estratégia: Dijkstra + via_estrada");
   s.addText([
     { text: "Variação:  ", options: { bold: true, color: ACCENT } },
     { text: "uma única execução de Dijkstra, com uma anotação extra por vértice — sem expansão de estado.", options: { color: MUTED, italic: true } },
@@ -405,16 +380,23 @@ function iconBadge(slide, cx, cy, glyph, color, r = 0.42) {
     });
     iy += 1.78;
   }
-  footer(s, 5);
+  s.addNotes(
+    "[~2 min p/ estratégia — começa aqui]\n" +
+    "Rodamos UM Dijkstra a partir da capital. A novidade é o vetor via_estrada: " +
+    "ele guarda se a melhor distância até cada cidade pode ser obtida só por estradas. " +
+    "No relaxamento, se acho caminho mais curto atualizo a distância e marco via_estrada " +
+    "conforme a aresta seja estrada ou trem; em empate por estrada, marco via_estrada = True."
+  );
+  footer(s, 4);
 }
 
 // =============================================================
-// Slide 6 — Dijkstra em ação (grafo + tabela enxuta)
+// Slide 5 — Dijkstra em ação (grafo + tabela enxuta)
 // =============================================================
 {
   const s = pres.addSlide();
   s.background = { color: WHITE };
-  title(s, "5. Dijkstra em ação — Exemplo 1");
+  title(s, "4. Dijkstra em ação — Exemplo 1");
 
   drawExemplo1(s, 0.5, 1.3, 6.2, 5.5, { distLabels: { 1: "0", 2: "1", 3: "3", 4: "5", 5: "5" } });
   s.addText("Distâncias finais (pílulas douradas)", {
@@ -455,16 +437,22 @@ function iconBadge(slide, cx, cy, glyph, color, r = 0.42) {
     });
     ry += 0.82;
   }
-  footer(s, 6);
+  s.addNotes(
+    "[~2 min p/ estratégia — continua]\n" +
+    "Aqui mostro o resultado no exemplo: as distâncias finais nas pílulas douradas. " +
+    "Olhando via_estrada, só a cidade 4 está marcada com F — ou seja, depende do trem. " +
+    "As outras têm caminho ótimo por estrada."
+  );
+  footer(s, 5);
 }
 
 // =============================================================
-// Slide 7 — Regras de fechamento (4 mini-grafos de situação)
+// Slide 6 — Regras de fechamento (4 mini-grafos de situação)
 // =============================================================
 {
   const s = pres.addSlide();
   s.background = { color: WHITE };
-  title(s, "6. Quando fechar cada trem?");
+  title(s, "5. Quando fechar cada trem?");
 
   // desenha uma "situação": capital 1, cidade s, trem (tracejado) e
   // opcionalmente uma estrada alternativa por um nó intermediário.
@@ -541,98 +529,92 @@ function iconBadge(slide, cx, cy, glyph, color, r = 0.42) {
     { text: "5 = 5, há estrada → ", options: { color: WHITE } }, { text: "fecha", options: { color: ACCENT, bold: true } },
   ], { x: 0.7, y: 6.15, w: 12, h: 0.8, fontFace: FONT_MONO, fontSize: 12.5, valign: "middle" });
 
+  s.addNotes(
+    "[~2 min p/ estratégia — fecha aqui]\n" +
+    "Esta é a regra de ouro. Como todo trem sai da capital, ele é a primeira aresta do " +
+    "caminho. Para cada trem (s, y): se y > dist[s] é inútil; se y = dist[s] e existe " +
+    "estrada equivalente, fecha; se y = dist[s] e NÃO há estrada, é essencial e mantém um. " +
+    "No exemplo: fecha 2 dos 3 trens."
+  );
+  footer(s, 6);
+}
+
+// =============================================================
+// Slide 7 — Complexidade e casos especiais (fundidos)
+// =============================================================
+{
+  const s = pres.addSlide();
+  s.background = { color: WHITE };
+  title(s, "6. Complexidade e casos especiais");
+
+  // --- Esquerda: complexidade ---
+  s.addShape("roundRect", {
+    x: 0.5, y: 1.35, w: 6.0, h: 1.75, fill: { color: NAVY }, line: { color: NAVY }, rectRadius: 0.1,
+  });
+  s.addText("Tempo", {
+    x: 0.75, y: 1.45, w: 4, h: 0.45, fontFace: FONT_HEAD, fontSize: 16, bold: true, color: GOLD,
+  });
+  s.addText("O((V + E) · log V)", {
+    x: 0.55, y: 1.9, w: 5.9, h: 1.05, fontFace: FONT_MONO, fontSize: 32, bold: true, color: WHITE, align: "center",
+  });
+
+  // chips V/E/logV
+  const chips = [
+    { k: "V = n", v: "vértices" },
+    { k: "E = 2m + k", v: "estradas ×2 + trens" },
+    { k: "log V", v: "heap (heapq)" },
+  ];
+  let chy = 3.35;
+  for (const c of chips) {
+    s.addText(c.k, { x: 0.6, y: chy, w: 2.2, h: 0.42, fontFace: FONT_MONO, fontSize: 14, bold: true, color: NAVY, valign: "middle" });
+    s.addText(c.v, { x: 2.85, y: chy, w: 3.5, h: 0.42, fontFace: FONT_BODY, fontSize: 12, color: DARK, italic: true, valign: "middle" });
+    chy += 0.55;
+  }
+
+  // stats reais
+  const stats = [
+    { big: "1625 ms", small: "tempo (lim. 2 s)", c: GOLD },
+    { big: "180 MB", small: "memória (lim. 256 MB)", c: ICE },
+  ];
+  let sx = 0.5;
+  for (const st of stats) {
+    s.addShape("roundRect", { x: sx, y: 5.15, w: 2.9, h: 1.7, fill: { color: DARK }, line: { color: st.c, width: 2 }, rectRadius: 0.1 });
+    s.addText(st.big, { x: sx + 0.15, y: 5.45, w: 2.6, h: 0.7, fontFace: FONT_HEAD, fontSize: 26, bold: true, color: st.c, align: "center" });
+    s.addText(st.small, { x: sx + 0.15, y: 6.15, w: 2.6, h: 0.5, fontFace: FONT_BODY, fontSize: 12, color: WHITE, align: "center" });
+    sx += 3.1;
+  }
+
+  // --- Direita: casos especiais ---
+  s.addText("Casos especiais", {
+    x: 6.9, y: 1.3, w: 6, h: 0.45, fontFace: FONT_HEAD, fontSize: 17, bold: true, color: ACCENT,
+  });
+  const items = [
+    { i: "10⁹", t: "Pesos grandes", d: "soma ~10¹⁴ — int do Python / long em Java." },
+    { i: "=",   t: "Empate trem × estrada", d: "via_estrada detecta e fecha o trem." },
+    { i: "≡",   t: "Trens repetidos", d: "agrupa por destino; mantém só o necessário." },
+    { i: "↓",   t: "Trem melhora distância", d: "é só mais uma aresta no Dijkstra." },
+  ];
+  let iy = 1.85;
+  for (const it of items) {
+    s.addShape("roundRect", { x: 6.9, y: iy, w: 5.95, h: 1.15, fill: { color: SOFT }, line: { color: ICE, width: 1 }, rectRadius: 0.06 });
+    iconBadge(s, 7.5, iy + 0.57, it.i, it.i.length > 2 ? ICE : ACCENT, 0.34);
+    s.addText(it.t, { x: 8.05, y: iy + 0.1, w: 4.7, h: 0.45, fontFace: FONT_HEAD, fontSize: 14.5, bold: true, color: NAVY });
+    s.addText(it.d, { x: 8.05, y: iy + 0.55, w: 4.7, h: 0.5, fontFace: FONT_BODY, fontSize: 12.5, color: DARK });
+    iy += 1.27;
+  }
+
+  s.addNotes(
+    "[~1 min p/ complexidade e casos]\n" +
+    "Um único Dijkstra com heap: O((V+E) log V), memória O(V+E). Na prática rodou em " +
+    "1,6 s e 180 MB, dentro dos limites. Casos a citar: pesos até 10^9 (cuidado com soma, " +
+    "usar long em Java; em Python tranquilo); empate trem×estrada resolvido por via_estrada; " +
+    "trens repetidos agrupados por destino."
+  );
   footer(s, 7);
 }
 
 // =============================================================
-// Slide 8 — Complexidade (número grande + stats visuais)
-// =============================================================
-{
-  const s = pres.addSlide();
-  s.background = { color: WHITE };
-  title(s, "7. Complexidade");
-
-  // Número grande dominante
-  s.addShape("roundRect", {
-    x: 0.5, y: 1.4, w: 7.4, h: 2.5, fill: { color: NAVY }, line: { color: NAVY }, rectRadius: 0.1,
-  });
-  s.addText("Tempo", {
-    x: 0.8, y: 1.55, w: 4, h: 0.5, fontFace: FONT_HEAD, fontSize: 18, bold: true, color: GOLD,
-  });
-  s.addText("O((V + E) · log V)", {
-    x: 0.6, y: 2.0, w: 7.2, h: 1.4, fontFace: FONT_MONO, fontSize: 44, bold: true, color: WHITE, align: "center",
-  });
-
-  // chips V, E, log V
-  s.addShape("roundRect", { x: 8.2, y: 1.4, w: 4.65, h: 2.5, fill: { color: SOFT }, line: { color: ICE, width: 1 }, rectRadius: 0.08 });
-  const chips = [
-    { k: "V = n", v: "vértices" },
-    { k: "E = 2m + k", v: "estradas (×2) + trens" },
-    { k: "log V", v: "heap binário (heapq)" },
-  ];
-  let chy = 1.6;
-  for (const c of chips) {
-    s.addText(c.k, { x: 8.45, y: chy, w: 1.9, h: 0.5, fontFace: FONT_MONO, fontSize: 15, bold: true, color: NAVY, valign: "middle" });
-    s.addText(c.v, { x: 10.4, y: chy, w: 2.4, h: 0.5, fontFace: FONT_BODY, fontSize: 12, color: DARK, italic: true, valign: "middle" });
-    chy += 0.72;
-  }
-
-  // Três stat callouts (memória + submissão real)
-  const stats = [
-    { big: "O(V+E)", small: "memória\n(adjacência + vetores)", c: ACCENT },
-    { big: "1625 ms", small: "tempo real\n(limite 2000 ms)", c: GOLD },
-    { big: "180 MB", small: "memória real\n(limite 256 MB)", c: ICE },
-  ];
-  let sx = 0.5;
-  for (const st of stats) {
-    s.addShape("roundRect", { x: sx, y: 4.25, w: 4.06, h: 2.55, fill: { color: DARK }, line: { color: st.c, width: 2 }, rectRadius: 0.1 });
-    s.addText(st.big, {
-      x: sx + 0.2, y: 4.7, w: 3.66, h: 1.0, fontFace: FONT_HEAD, fontSize: 36, bold: true, color: st.c, align: "center",
-    });
-    s.addText(st.small, {
-      x: sx + 0.2, y: 5.7, w: 3.66, h: 0.9, fontFace: FONT_BODY, fontSize: 14, color: WHITE, align: "center",
-    });
-    sx += 4.27;
-  }
-  footer(s, 8);
-}
-
-// =============================================================
-// Slide 9 — Casos especiais (ícones grandes + 1 linha)
-// =============================================================
-{
-  const s = pres.addSlide();
-  s.background = { color: WHITE };
-  title(s, "8. Casos especiais");
-
-  const items = [
-    { i: "10⁹", t: "Pesos grandes", d: "soma ~10¹⁴ — int do Python (long em Java)." },
-    { i: "≡",   t: "Trens repetidos", d: "agrupa por destino; mantém só o necessário." },
-    { i: "∥",   t: "Arestas paralelas", d: "cada uma é uma entrada; Dijkstra escolhe." },
-    { i: "=",   t: "Empate trem × estrada", d: "via_estrada detecta e fecha o trem." },
-    { i: "↓",   t: "Trem melhora distância", d: "é só mais uma aresta no Dijkstra." },
-    { i: "✓",   t: "Sempre conexo", d: "nenhum dist[v] fica em ∞." },
-  ];
-  let i = 0;
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 3; col++) {
-      const x = 0.5 + col * 4.27, y = 1.4 + row * 2.75;
-      const it = items[i++];
-      s.addShape("roundRect", { x, y, w: 4.06, h: 2.5, fill: { color: SOFT }, line: { color: ICE, width: 1 }, rectRadius: 0.08 });
-      iconBadge(s, x + 0.7, y + 0.85, it.i, it.i.length > 2 ? ICE : ACCENT, 0.42);
-      s.addText(it.t, {
-        x: x + 1.3, y: y + 0.35, w: 2.6, h: 0.9, fontFace: FONT_HEAD, fontSize: 16, bold: true, color: NAVY, valign: "middle",
-      });
-      s.addText(it.d, {
-        x: x + 0.3, y: y + 1.45, w: 3.5, h: 0.95, fontFace: FONT_BODY, fontSize: 13, color: DARK,
-      });
-    }
-  }
-  footer(s, 9);
-}
-
-// =============================================================
-// Slide 10 — Conclusão / Accepted
+// Slide 8 — Conclusão / Accepted
 // =============================================================
 {
   const s = pres.addSlide();
@@ -671,6 +653,11 @@ function iconBadge(slide, cx, cy, glyph, color, r = 0.42) {
   s.addText("Obrigado!  •  Grupo F  •  Codeforces 449B — Jzzhu and Cities", {
     x: 0.9, y: 6.95, w: 11.5, h: 0.4, fontFace: FONT_BODY, fontSize: 12, italic: true, color: ICE, align: "center",
   });
+  s.addNotes(
+    "[~1 min p/ conclusão]\n" +
+    "Recapitular as 3 ideias e mostrar o Accepted: 1625 ms / 180 MB no Codeforces. " +
+    "Total alvo da apresentação: 5 minutos."
+  );
 }
 
 pres.writeFile({ fileName: "apresentacao.pptx" }).then((f) => console.log("escrito:", f));
