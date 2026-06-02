@@ -455,9 +455,14 @@ function drawExemplo1(slide, x0, y0, w, h, opts = {}) {
   s.background = { color: WHITE };
   title(s, "4. Estratégia: Dijkstra + marcação de alternativa");
 
-  s.addText("Variação utilizada: Dijkstra clássico de origem única, com uma anotação por vértice.", {
+  s.addText([
+    { text: "Variação de Dijkstra:  ", options: { bold: true, color: ACCENT } },
+    { text: "uma única execução do Dijkstra clássico de origem única, com uma anotação extra por vértice (", options: { color: MUTED, italic: true } },
+    { text: "via_estrada", options: { color: NAVY, italic: true, bold: true } },
+    { text: ") — sem expansão de estado nem múltiplas execuções.", options: { color: MUTED, italic: true } },
+  ], {
     x: 0.5, y: 1.05, w: 12.3, h: 0.35,
-    fontFace: FONT_BODY, fontSize: 14, italic: true, color: MUTED,
+    fontFace: FONT_BODY, fontSize: 13,
   });
 
   // Três blocos: Init, Fila de prioridade, Relaxamento
@@ -622,44 +627,46 @@ function drawExemplo1(slide, x0, y0, w, h, opts = {}) {
   });
   s.addText([
     { text: "Observação-chave:  ", options: { bold: true, color: ACCENT } },
-    { text: "todo trem sai da capital, então em qualquer caminho mínimo um trem aparece como ", options: { color: DARK } },
+    { text: "todo trem sai da capital, então em qualquer caminho mínimo um trem só pode aparecer como ", options: { color: DARK } },
     { text: "a primeira (e única) aresta", options: { bold: true, color: NAVY } },
-    { text: ". Decidimos um trem por vez, agrupados pela cidade de destino.", options: { color: DARK } },
+    { text: ". Para vértices que não são destino direto de trem o problema é Dijkstra padrão — basta decidir, para cada trem, se ele pode ser fechado.", options: { color: DARK } },
   ], {
     x: 0.7, y: 1.25, w: 12, h: 0.85,
-    fontFace: FONT_BODY, fontSize: 14,
+    fontFace: FONT_BODY, fontSize: 13,
   });
 
-  // Três casos
+  // Quatro casos
   const cases = [
-    { titulo: "Trem inútil",            cond: "y > dist[s]",                         res: "FECHA",              txt: "O melhor caminho até s já é menor que o trem; fechar não muda nada.", cor: ACCENT },
-    { titulo: "Alternativa por estrada", cond: "y = dist[s]  e  via_estrada[s]",     res: "FECHA",              txt: "Há um caminho ótimo cujo último passo é estrada — manter o trem é redundante.", cor: ICE },
-    { titulo: "Trem essencial",          cond: "y = dist[s]  e  ¬via_estrada[s]",    res: "mantém 1, fecha duplicatas", txt: "Sem trem, dist[s] aumentaria. Mantém-se exatamente um trem com esse custo.", cor: GOLD },
+    { titulo: "Trem inútil",             cond: "y > dist[s]",                        res: "FECHA",     txt: "O melhor caminho até s já é menor que o trem.", cor: ACCENT },
+    { titulo: "Alternativa por estrada", cond: "y = dist[s] e via_estrada[s]",       res: "FECHA",     txt: "Há um caminho ótimo só por estradas — trem redundante.", cor: ICE },
+    { titulo: "Trem essencial",          cond: "y = dist[s] e ¬via_estrada[s]",      res: "MANTÉM 1",  txt: "Sem trem, dist[s] aumentaria. Duplicatas são fechadas.", cor: GOLD },
+    { titulo: "Caso impossível",         cond: "y < dist[s]",                        res: "—",         txt: "Não ocorre: o trem já entrou no Dijkstra e fixaria dist[s].", cor: MUTED },
   ];
   let cx = 0.5;
+  const cardW = 3.02;
   for (const c of cases) {
     s.addShape("roundRect", {
-      x: cx, y: 2.45, w: 4.06, h: 3.0,
+      x: cx, y: 2.45, w: cardW, h: 3.0,
       fill: { color: DARK }, line: { color: c.cor, width: 2 }, rectRadius: 0.08,
     });
     s.addText(c.titulo, {
-      x: cx + 0.25, y: 2.55, w: 3.6, h: 0.45,
-      fontFace: FONT_HEAD, fontSize: 16, bold: true, color: c.cor,
+      x: cx + 0.2, y: 2.55, w: cardW - 0.4, h: 0.4,
+      fontFace: FONT_HEAD, fontSize: 14, bold: true, color: c.cor,
     });
     s.addText(c.cond, {
-      x: cx + 0.25, y: 3.05, w: 3.6, h: 0.4,
-      fontFace: FONT_MONO, fontSize: 12, color: WHITE,
+      x: cx + 0.2, y: 3.0, w: cardW - 0.4, h: 0.4,
+      fontFace: FONT_MONO, fontSize: 11, color: WHITE,
     });
-    s.addShape("line", { x: cx + 0.25, y: 3.55, w: 3.6, h: 0, line: { color: c.cor, width: 1 } });
+    s.addShape("line", { x: cx + 0.2, y: 3.5, w: cardW - 0.4, h: 0, line: { color: c.cor, width: 1 } });
     s.addText("→ " + c.res, {
-      x: cx + 0.25, y: 3.65, w: 3.6, h: 0.4,
-      fontFace: FONT_BODY, fontSize: 13, bold: true, color: c.cor,
+      x: cx + 0.2, y: 3.6, w: cardW - 0.4, h: 0.4,
+      fontFace: FONT_BODY, fontSize: 12, bold: true, color: c.cor,
     });
     s.addText(c.txt, {
-      x: cx + 0.25, y: 4.1, w: 3.6, h: 1.3,
-      fontFace: FONT_BODY, fontSize: 12, color: ICE,
+      x: cx + 0.2, y: 4.05, w: cardW - 0.4, h: 1.35,
+      fontFace: FONT_BODY, fontSize: 11, color: ICE,
     });
-    cx += 4.27;
+    cx += cardW + 0.08;
   }
 
   // Aplicação aos trens do exemplo
